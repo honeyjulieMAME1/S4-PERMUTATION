@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S₄ Two-Line Notation Randomizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .two-line {
+            font-family: monospace;
+            font-size: 24px;
+            margin: 30px 0;
+            line-height: 1.6;
+        }
+        .questions {
+            margin: 30px 0;
+            text-align: left;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .question {
+            margin-bottom: 20px;
+        }
+        .answer-input {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .check-btn {
+            background-color: #2ecc71;
+            margin-left: 10px;
+        }
+        .check-btn:hover {
+            background-color: #27ae60;
+        }
+        .feedback {
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        .correct {
+            color: #27ae60;
+        }
+        .incorrect {
+            color: #e74c3c;
+        }
+        .info {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #555;
+            text-align: left;
+        }
+        .show-answers-btn {
+            background-color: #9b59b6;
+        }
+        .show-answers-btn:hover {
+            background-color: #8e44ad;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>S₄ Two-Line Notation Randomizer</h1>
+    <p>Generate random permutations of 4 elements in two-line notation</p>
+    
+    <button id="generateBtn">Generate Random Permutation</button>
+    
+    <div id="result" class="two-line"></div>
+    
+    <div id="questions" class="questions" style="display: none;">
+        <h3>Questions about this permutation:</h3>
+        <div class="question">
+            <strong>1. What is the orbit of this permutation?</strong>
+            <input type="text" id="orbit-input" class="answer-input" placeholder="Enter orbit (e.g., 1, 2, 3)">
+            <button class="check-btn" onclick="checkAnswer('orbit')">Check</button>
+            <div id="orbit-feedback" class="feedback"></div>
+            <div id="orbit-answer" class="hidden"></div>
+        </div>
+        <div class="question">
+            <strong>2. What is the cycle decomposition of this permutation?</strong>
+            <input type="text" id="cycle-input" class="answer-input" placeholder="Enter cycle notation (e.g., (1 2)(3 4))">
+            <button class="check-btn" onclick="checkAnswer('cycle')">Check</button>
+            <div id="cycle-feedback" class="feedback"></div>
+            <div id="cycle-answer" class="hidden"></div>
+        </div>
+        <div class="question">
+            <strong>3. Is this permutation even or odd?</strong>
+            <input type="text" id="parity-input" class="answer-input" placeholder="Enter 'even' or 'odd'">
+            <button class="check-btn" onclick="checkAnswer('parity')">Check</button>
+            <div id="parity-feedback" class="feedback"></div>
+            <div id="alternating-answer" class="hidden"></div>
+        </div>
+        <button id="showAnswersBtn" class="show-answers-btn">Show All Answers</button>
+    </div>
+    
+    <div class="info">
+        <h3>About Two-Line Notation:</h3>
+        <p>In two-line notation for S₄, the first line shows the original elements (1 2 3 4), and the second line shows where each element is mapped.</p>
+        <p>Example: <br>
+        1 2 3 4<br>
+        2 1 4 3</p>
+        <p>This represents the permutation that swaps 1↔2 and 3↔4.</p>
+        <h3>How to Answer:</h3>
+        <ul>
+            <li><strong>Orbit</strong>: List all elements that are moved (e.g., "1, 2, 3")</li>
+            <li><strong>Cycle decomposition</strong>: Write cycles separated by spaces (e.g., "(1 2)(3 4)")</li>
+            <li><strong>Even/Odd</strong>: Just write "even" or "odd"</li>
+        </ul>
+    </div>
+
+    <script>
+        let currentPermutation = [];
+        let correctAnswers = {};
+        
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            currentPermutation = generateRandomPermutation();
+            
+            document.getElementById('result').innerHTML = 
+                '1 2 3 4<br>' + 
+                currentPermutation.join(' ');
+            
+            document.getElementById('questions').style.display = 'block';
+            
+            // Clear previous answers and feedback
+            document.getElementById('orbit-input').value = '';
+            document.getElementById('cycle-input').value = '';
+            document.getElementById('parity-input').value = '';
+            
+            document.getElementById('orbit-feedback').textContent = '';
+            document.getElementById('cycle-feedback').textContent = '';
+            document.getElementById('parity-feedback').textContent = '';
+            
+            document.getElementById('orbit-feedback').className = 'feedback';
+            document.getElementById('cycle-feedback').className = 'feedback';
+            document.getElementById('parity-feedback').className = 'feedback';
+            
+            // Hide all answer divs
+            document.getElementById('orbit-answer').classList.add('hidden');
+            document.getElementById('cycle-answer').classList.add('hidden');
+            document.getElementById('alternating-answer').classList.add('hidden');
+            
+            // Calculate correct answers
+            correctAnswers = {
+                orbit: getOrbit(currentPermutation).join(', '),
+                cycle: getCycleNotation(currentPermutation),
+                parity: isPermutationEven(currentPermutation) ? 'even' : 'odd'
+            };
+        });
+        
+        document.getElementById('showAnswersBtn').addEventListener('click', function() {
+            document.getElementById('orbit-answer').innerHTML = 
+                "Correct answer: " + correctAnswers.orbit;
+            document.getElementById('orbit-answer').classList.remove('hidden');
+            
+            document.getElementById('cycle-answer').innerHTML = 
+                "Correct answer: " + correctAnswers.cycle;
+            document.getElementById('cycle-answer').classList.remove('hidden');
+            
+            document.getElementById('alternating-answer').innerHTML = 
+                "Correct answer: " + correctAnswers.parity + 
+                ". This permutation can be expressed as a product of " + 
+                getNumberOfTranspositions(currentPermutation) + " transpositions.";
+            document.getElementById('alternating-answer').classList.remove('hidden');
+        });
+        
+        function checkAnswer(type) {
+            const inputElement = document.getElementById(`${type}-input`);
+            const feedbackElement = document.getElementById(`${type}-feedback`);
+            const userAnswer = inputElement.value.trim();
+            
+            if (userAnswer === '') {
+                feedbackElement.textContent = 'Please enter an answer';
+                feedbackElement.className = 'feedback incorrect';
+                return;
+            }
+            
+            if (type === 'parity') {
+                const normalizedUserAnswer = userAnswer.toLowerCase();
+                if (normalizedUserAnswer === correctAnswers.parity) {
+                    feedbackElement.textContent = 'Correct!';
+                    feedbackElement.className = 'feedback correct';
+                } else {
+                    feedbackElement.textContent = `Incorrect. Try again! (Hint: It's ${correctAnswers.parity})`;
+                    feedbackElement.className = 'feedback incorrect';
+                }
+                return;
+            }
+            
+            // For orbit and cycle answers, we need to compare sets
+            if (type === 'orbit') {
+                const userOrbit = new Set(userAnswer.split(',').map(item => item.trim()));
+                const correctOrbit = new Set(correctAnswers.orbit.split(',').map(item => item.trim()));
+                
+                if (setsAreEqual(userOrbit, correctOrbit)) {
+                    feedbackElement.textContent = 'Correct!';
+                    feedbackElement.className = 'feedback correct';
+                } else {
+                    feedbackElement.textContent = 'Incorrect. Try again!';
+                    feedbackElement.className = 'feedback incorrect';
+                }
+                return;
+            }
+            
+            if (type === 'cycle') {
+                // Simple comparison for now (could be improved to handle equivalent cycle notations)
+                if (userAnswer === correctAnswers.cycle) {
+                    feedbackElement.textContent = 'Correct!';
+                    feedbackElement.className = 'feedback correct';
+                } else {
+                    feedbackElement.textContent = 'Incorrect. Try again!';
+                    feedbackElement.className = 'feedback incorrect';
+                }
+            }
+        }
+        
+        function setsAreEqual(set1, set2) {
+            if (set1.size !== set2.size) return false;
+            for (const item of set1) {
+                if (!set2.has(item)) return false;
+            }
+            return true;
+        }
+        
+        function generateRandomPermutation() {
+            let array = [1, 2, 3, 4];
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        function getCycleNotation(permutation) {
+            let visited = new Array(permutation.length).fill(false);
+            let cycles = [];
+            
+            for (let i = 0; i < permutation.length; i++) {
+                if (!visited[i]) {
+                    let cycle = [];
+                    let j = i;
+                    
+                    while (!visited[j]) {
+                        visited[j] = true;
+                        cycle.push(j + 1);
+                        j = permutation[j] - 1;
+                    }
+                    
+                    if (cycle.length > 1) {
+                        cycles.push('(' + cycle.join(' ') + ')');
+                    }
+                }
+            }
+            
+            return cycles.length > 0 ? cycles.join('') : '()';
+        }
+        
+        function getOrbit(permutation) {
+            let moved = [];
+            for (let i = 0; i < permutation.length; i++) {
+                if (permutation[i] !== i + 1) {
+                    moved.push(i + 1);
+                }
+            }
+            return moved.length > 0 ? moved : [1, 2, 3, 4];
+        }
+        
+        function isPermutationEven(permutation) {
+            return getNumberOfTranspositions(permutation) % 2 === 0;
+        }
+        
+        function getNumberOfTranspositions(permutation) {
+            let inversions = 0;
+            for (let i = 0; i < permutation.length; i++) {
+                for (let j = i + 1; j < permutation.length; j++) {
+                    if (permutation[i] > permutation[j]) {
+                        inversions++;
+                    }
+                }
+            }
+            return inversions;
+        }
+    </script>
+</body>
+</html>
